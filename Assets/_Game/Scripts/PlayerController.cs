@@ -3,14 +3,18 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 /// <summary>
-/// Day 1: owner-controlled movement. Keyboard (WASD/arrows) in the editor,
-/// floating touch joystick on the LEFT half of the screen on iPhone.
+/// Owner-controlled movement. Keyboard (WASD/arrows, hold Shift to run) in the editor,
+/// floating touch joystick on the LEFT half of the screen on iPhone (push far = run).
 /// Needs: CharacterController, NetworkObject, NetworkTransform (Authority Mode = Owner).
+/// Animation is handled by CharacterVisuals.
 /// </summary>
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : NetworkBehaviour
 {
-    [SerializeField] float walkSpeed = 3.5f;
+    [Tooltip("Speed at full joystick. Walk/Run blend thresholds in the Animator should match (Walk 1.8, Run 4.5).")]
+    [SerializeField] float runSpeed = 4.5f;
+    [Tooltip("Keyboard speed without Shift, as a fraction of runSpeed.")]
+    [SerializeField] float keyboardWalkFraction = 0.4f;
     [SerializeField] float turnSpeed = 12f;
     [SerializeField] float gravity = -20f;
     [Tooltip("How far you drag for full speed, as a fraction of screen height.")]
@@ -18,9 +22,6 @@ public class PlayerController : NetworkBehaviour
 
     float JoystickRadius => Screen.height * joystickRadiusFraction;
     static Texture2D circleTex;
-
-    static readonly Color BoyColor = new Color(0.30f, 0.55f, 1.00f);
-    static readonly Color GirlColor = new Color(1.00f, 0.45f, 0.70f);
 
     CharacterController cc;
     float verticalVelocity;
@@ -36,26 +37,53 @@ public class PlayerController : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        // Same color logic runs on every device, so no extra syncing needed.
-        var rend = GetComponentInChildren<Renderer>();
-        if (rend != null)
-            rend.material.color = OwnerClientId == NetworkManager.ServerClientId ? BoyColor : GirlColor;
-
         if (IsOwner)
         {
             // Spawn side by side instead of inside each other.
-            cc.enabled = false;
-            transform.position = new Vector3(OwnerClientId == NetworkManager.ServerClientId ? -1.5f : 1.5f, 1f, 0f);
-            cc.enabled = true;
+            spawnXZ = new Vector3(OwnerClientId == NetworkManager.ServerClientId ? -1.0f : 1.0f, 0f, 0f);
+            Respawn();
 
             var cam = Camera.main != null ? Camera.main.GetComponent<SimpleFollowCamera>() : null;
             if (cam != null) cam.target = transform;
         }
     }
 
+    Vector3 spawnXZ;
+
+    /// <summary>Places the player on top of whatever ground is below the spawn point
+    /// (works no matter how high the terrain is sculpted).</summary>
+    public void Respawn()
+    {
+        cc.enabled = false; // a disabled controller is ignored by the raycast
+
+        Vector3 pos = spawnXZ + Vector3.up * 0.1f; // fallback: ground at y = 0
+        if (Physics.Raycast(spawnXZ + Vector3.up * 500f, Vector3.down, out RaycastHit hit, 1000f,
+                            Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
+        {
+            pos = hit.point + Vector3.up * 0.1f;
+            Debug.Log($"[Player] Spawned on '{hit.collider.name}' at height {hit.point.y:F1}");
+        }
+        else
+        {
+            Debug.LogWarning("[Player] No ground found under the spawn point! Is the Terrain (with Terrain Collider) in this scene and saved?");
+        }
+
+        transform.position = pos;
+        verticalVelocity = 0f;
+        cc.enabled = true;
+    }
+
     void Update()
     {
         if (!IsSpawned || !IsOwner) return;
+
+        // Safety net: fell off the world (edge of the map, hole, glitch) -> back to the spawn point.
+        if (transform.position.y < -50f)
+        {
+            Debug.LogWarning($"[Player] Fell out of the world at {transform.position}, respawning.");
+            Respawn();
+            return;
+        }
 
         Vector2 input = ReadMoveInput();
 
@@ -80,7 +108,7 @@ public class PlayerController : NetworkBehaviour
         if (cc.isGrounded && verticalVelocity < 0f) verticalVelocity = -2f;
         verticalVelocity += gravity * Time.deltaTime;
 
-        cc.Move((move * walkSpeed + Vector3.up * verticalVelocity) * Time.deltaTime);
+        cc.Move((move * runSpeed + Vector3.up * verticalVelocity) * Time.deltaTime);
     }
 
     Vector2 ReadMoveInput()
@@ -90,10 +118,14 @@ public class PlayerController : NetworkBehaviour
         var kb = Keyboard.current;
         if (kb != null)
         {
-            if (kb.wKey.isPressed || kb.upArrowKey.isPressed) v.y += 1f;
-            if (kb.sKey.isPressed || kb.downArrowKey.isPressed) v.y -= 1f;
-            if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) v.x += 1f;
-            if (kb.aKey.isPressed || kb.leftArrowKey.isPressed) v.x -= 1f;
+            Vector2 k = Vector2.zero;
+            if (kb.wKey.isPressed || kb.upArrowKey.isPressed) k.y += 1f;
+            if (kb.sKey.isPressed || kb.downArrowKey.isPressed) k.y -= 1f;
+            if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) k.x += 1f;
+            if (kb.aKey.isPressed || kb.leftArrowKey.isPressed) k.x -= 1f;
+            k = Vector2.ClampMagnitude(k, 1f);
+            if (!kb.leftShiftKey.isPressed) k *= keyboardWalkFraction; // walk unless Shift
+            v += k;
         }
 
         var ts = Touchscreen.current;

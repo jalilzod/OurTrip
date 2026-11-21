@@ -31,6 +31,8 @@ public class NetworkBootstrap : MonoBehaviour
     async void Start()
     {
         Application.targetFrameRate = 60;
+        Screen.orientation = ScreenOrientation.LandscapeLeft;
+        NetworkManager.Singleton.OnClientConnectedCallback += OnConnected;
         NetworkManager.Singleton.OnClientDisconnectCallback += OnDisconnect;
         await InitServices();
     }
@@ -38,7 +40,23 @@ public class NetworkBootstrap : MonoBehaviour
     void OnDestroy()
     {
         if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.OnClientConnectedCallback -= OnConnected;
             NetworkManager.Singleton.OnClientDisconnectCallback -= OnDisconnect;
+        }
+    }
+
+    void OnConnected(ulong clientId)
+    {
+        var nm = NetworkManager.Singleton;
+        if (nm.IsServer)
+        {
+            if (clientId != nm.LocalClientId) status = "Partner joined";
+        }
+        else if (clientId == nm.LocalClientId)
+        {
+            status = "Connected (" + ConnType + ")";
+        }
     }
 
     async Task InitServices()
@@ -134,13 +152,21 @@ public class NetworkBootstrap : MonoBehaviour
         float s = Screen.height / 540f;
         GUI.matrix = Matrix4x4.Scale(new Vector3(s, s, 1f));
         float w = 300f;
-        GUILayout.BeginArea(new Rect(Screen.width / s - w - 10f, 10f, w, 380f), GUI.skin.box);
+        // Area is only a position; the box below shrinks to fit its content.
+        GUILayout.BeginArea(new Rect(Screen.width / s - w - 10f, 10f, w, 540f));
+        GUILayout.BeginVertical(GUI.skin.box);
 
         GUILayout.Label(status);
 
         if (!nm.IsClient && !nm.IsServer)
         {
             GUI.enabled = !busy && ServicesReady;
+
+            // Character choice (saved on the phone, synced when you join)
+            GUILayout.Label("I am:");
+            int choice = CharacterVisuals.LocalChoice;
+            int newChoice = GUILayout.Toolbar(choice, new[] { "Boy", "Girl" }, GUILayout.Height(40));
+            if (newChoice != choice) CharacterVisuals.LocalChoice = newChoice;
 
             if (GUILayout.Button("Connection: " + connection, GUILayout.Height(36)))
                 connection = connection == RelayConnection.DTLS ? RelayConnection.WSS : RelayConnection.DTLS;
@@ -181,6 +207,7 @@ public class NetworkBootstrap : MonoBehaviour
             }
         }
 
+        GUILayout.EndVertical();
         GUILayout.EndArea();
     }
 
