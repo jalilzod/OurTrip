@@ -1,33 +1,56 @@
-# Unity YAML files: text, merged as text
-*.unity     text eol=lf
-*.prefab    text eol=lf
-*.asset     text eol=lf
-*.meta      text eol=lf
-*.mat       text eol=lf
-*.anim      text eol=lf
-*.controller text eol=lf
-*.cs        text eol=lf diff=csharp
+# ---- Unity YAML text files (always text in Unity's default "Force Text" mode) ----
+*.unity       text eol=lf
+*.prefab      text eol=lf
+*.meta        text eol=lf
+*.mat         text eol=lf
+*.anim        text eol=lf
+*.controller  text eol=lf
+*.overrideController text eol=lf
+*.physicMaterial text eol=lf
+*.terrainlayer text eol=lf
+*.cs          text eol=lf diff=csharp
+*.shader      text eol=lf
+*.shadergraph text eol=lf
+*.json        text eol=lf
 
-# Big binary files go to Git LFS
+# ---- .asset files: some are YAML, some are BINARY (e.g. terrain data, lighting data).
+# Never convert them, or binary ones get corrupted.
+*.asset       -text
+
+# Big binary .asset files go to LFS (these rules come after, so they win)
+*Terrain.asset      filter=lfs diff=lfs merge=lfs -text
+*TerrainData*.asset filter=lfs diff=lfs merge=lfs -text
+LightingData.asset  filter=lfs diff=lfs merge=lfs -text
+*.exr               filter=lfs diff=lfs merge=lfs -text
+
+# ---- 3D models ----
 *.fbx   filter=lfs diff=lfs merge=lfs -text
 *.FBX   filter=lfs diff=lfs merge=lfs -text
 *.obj   filter=lfs diff=lfs merge=lfs -text
 *.blend filter=lfs diff=lfs merge=lfs -text
 *.vrm   filter=lfs diff=lfs merge=lfs -text
 *.glb   filter=lfs diff=lfs merge=lfs -text
+*.gltf  filter=lfs diff=lfs merge=lfs -text
+
+# ---- Images ----
 *.png   filter=lfs diff=lfs merge=lfs -text
+*.PNG   filter=lfs diff=lfs merge=lfs -text
 *.jpg   filter=lfs diff=lfs merge=lfs -text
 *.jpeg  filter=lfs diff=lfs merge=lfs -text
 *.tga   filter=lfs diff=lfs merge=lfs -text
-*.psd   filter=lfs diff=lfs merge=lfs -text
 *.tif   filter=lfs diff=lfs merge=lfs -text
-*.exr   filter=lfs diff=lfs merge=lfs -text
+*.tiff  filter=lfs diff=lfs merge=lfs -text
+*.psd   filter=lfs diff=lfs merge=lfs -text
 *.hdr   filter=lfs diff=lfs merge=lfs -text
 *.ai    filter=lfs diff=lfs merge=lfs -text
+
+# ---- Audio / video ----
 *.mp3   filter=lfs diff=lfs merge=lfs -text
 *.wav   filter=lfs diff=lfs merge=lfs -text
 *.ogg   filter=lfs diff=lfs merge=lfs -text
 *.mp4   filter=lfs diff=lfs merge=lfs -text
 *.mov   filter=lfs diff=lfs merge=lfs -text
+
+# ---- Fonts ----
 *.ttf   filter=lfs diff=lfs merge=lfs -text
 *.otf   filter=lfs diff=lfs merge=lfs -text
