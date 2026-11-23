@@ -109,6 +109,7 @@ public class EmoteController : NetworkBehaviour
     // ---------- Temporary on-screen buttons (bottom-right). Replaced by designed UI on Day 6-7. ----------
     void OnGUI()
     {
+        if (PhotoMode.HideUI) return;
         if (!IsSpawned || !IsOwner) return;
 
         float s = Screen.height / 540f;

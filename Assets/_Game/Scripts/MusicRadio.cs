@@ -24,7 +24,7 @@ public class MusicRadio : NetworkBehaviour
 
     [SerializeField] Track[] tracks;
     [SerializeField] AudioSource source;
-    [Range(0f, 1f)][SerializeField] float defaultVolume = 0.6f;
+    [Range(0f, 1f)] [SerializeField] float defaultVolume = 0.6f;
     [Tooltip("If the song drifts more than this many seconds from your partner, jump back in sync.")]
     [SerializeField] float resyncThreshold = 0.5f;
 
@@ -122,6 +122,7 @@ public class MusicRadio : NetworkBehaviour
     // ---------- Temporary buttons (top-left, next to "World"). Replaced by designed UI later. ----------
     void OnGUI()
     {
+        if (PhotoMode.HideUI) return;
         var nm = NetworkManager.Singleton;
         if (nm == null || !nm.IsConnectedClient && !nm.IsServer) return;
 

@@ -30,14 +30,14 @@ public class CatAI : NetworkBehaviour
     [SerializeField] float runSpeed = 4f;
     [SerializeField] float turnSpeed = 6f;
     [Tooltip("Raise (+) or lower (-) the cat if its paws float above or sink into the ground.")]
-    [SerializeField] float groundOffset = 0.35f;
+    [SerializeField] float groundOffset = 0f;
     [Tooltip("The cat stops this far from you.")]
     [SerializeField] float stopDistance = 1.5f;
     [Tooltip("Further than this, the cat runs instead of walking.")]
     [SerializeField] float runDistance = 7f;
 
     [Header("Resting")]
-    [SerializeField] float sitAfterSeconds = 10f;
+    [SerializeField] float sitAfterSeconds = 8f;
     [SerializeField] float sleepAfterSeconds = 45f;
     [Tooltip("Optional: the cat bed. At night the cat goes there to sleep.")]
     [SerializeField] Transform bed;
@@ -205,6 +205,7 @@ public class CatAI : NetworkBehaviour
     // Temporary button (top-left, next to World and Music)
     void OnGUI()
     {
+        if (PhotoMode.HideUI) return;
         var nm = NetworkManager.Singleton;
         if (nm == null || !nm.IsConnectedClient && !nm.IsServer) return;
 
