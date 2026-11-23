@@ -15,6 +15,8 @@ GameObject:
   - component: {fileID: 7974435314495637067}
   - component: {fileID: 1250755951460989226}
   - component: {fileID: 421078446179756463}
+  - component: {fileID: -2683699382489044634}
+  - component: {fileID: 2378740119531808174}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -155,6 +157,7 @@ MonoBehaviour:
   turnSpeed: 12
   gravity: -20
   joystickRadiusFraction: 0.12
+  spawnPoint: {x: -78.46, y: 0, z: -124.17}
 --- !u!114 &1250755951460989226
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -186,6 +189,42 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   fade: 0.2
   cancelSpeed: 0.4
+--- !u!114 &-2683699382489044634
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5419682377915072862}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 00d7a1671b1d5334c8109514f40e2791, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PairEmote
+  ShowTopMostFoldoutHeaderGroup: 1
+  maxDistance: 2.5
+  gap:
+  - 0.45
+  - 0.5
+  fade: 0.25
+  heartsPrefab: {fileID: 8419698582937387614, guid: de7ae66011246c348aa960fec4ce323f, type: 3}
+  inviteTimeout: 10
+--- !u!114 &2378740119531808174
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5419682377915072862}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c50f1f03ad17fc44cacf28ace7d142d1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SitController
+  ShowTopMostFoldoutHeaderGroup: 1
+  sitState: Sit
+  fade: 0.3
+  standUpStep: 0.7
 --- !u!1001 &2490433283899155982
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -208,7 +247,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 3a1f6308732da964388fc16bba86168a, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 1.631
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 3a1f6308732da964388fc16bba86168a, type: 3}
       propertyPath: m_LocalPosition.y

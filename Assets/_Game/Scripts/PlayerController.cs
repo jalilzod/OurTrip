@@ -26,6 +26,24 @@ public class PlayerController : NetworkBehaviour
     CharacterController cc;
     float verticalVelocity;
 
+    /// <summary>While true, joystick/keys are ignored (used during hugs, kisses, sitting).</summary>
+    public bool InputLocked { get; set; }
+
+    /// <summary>While true, the character doesn't move at all (not even gravity). Used for sitting.</summary>
+    public bool MovementFrozen { get; set; }
+
+    /// <summary>The joystick/keys input this frame, even while locked (used to stand up).</summary>
+    public Vector2 RawInput { get; private set; }
+
+    /// <summary>Moves this player instantly (owner only), e.g. to line up for a hug.</summary>
+    public void Teleport(Vector3 position, Quaternion rotation)
+    {
+        cc.enabled = false;
+        transform.SetPositionAndRotation(position, rotation);
+        verticalVelocity = 0f;
+        cc.enabled = true;
+    }
+
     int stickTouchId = -1;
     Vector2 stickStart;
     Vector2 stickVector;
@@ -40,13 +58,17 @@ public class PlayerController : NetworkBehaviour
         if (IsOwner)
         {
             // Spawn side by side instead of inside each other.
-            spawnXZ = new Vector3(OwnerClientId == NetworkManager.ServerClientId ? -1.0f : 1.0f, 0f, 0f);
+            float side = OwnerClientId == NetworkManager.ServerClientId ? -1.0f : 1.0f;
+            spawnXZ = new Vector3(spawnPoint.x + side, 0f, spawnPoint.z);
             Respawn();
 
             var cam = Camera.main != null ? Camera.main.GetComponent<SimpleFollowCamera>() : null;
             if (cam != null) cam.target = transform;
         }
     }
+
+    [Tooltip("Where players appear (X and Z). Height is found automatically from the ground.")]
+    [SerializeField] Vector3 spawnPoint = new Vector3(-78.46f, 0f, -124.17f);
 
     Vector3 spawnXZ;
 
@@ -85,7 +107,10 @@ public class PlayerController : NetworkBehaviour
             return;
         }
 
-        Vector2 input = ReadMoveInput();
+        RawInput = ReadMoveInput();
+        if (MovementFrozen) return; // sitting: no movement, no gravity
+
+        Vector2 input = InputLocked ? Vector2.zero : RawInput;
 
         // Move relative to the camera direction.
         Vector3 move;

@@ -96,6 +96,9 @@ public class EmoteController : NetworkBehaviour
     [Rpc(SendTo.Everyone)]
     void StopEmoteRpc() => Stop();
 
+    /// <summary>Forget the current solo emote without changing the animation (a paired emote takes over).</summary>
+    public void ResetLocal() => current = -1;
+
     void Stop()
     {
         var anim = visuals.Animator;
