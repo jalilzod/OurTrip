@@ -17,7 +17,7 @@ public class FireflyHunt : NetworkBehaviour
     [Tooltip("Optional: effect spawned around each player when all fireflies are caught.")]
     [SerializeField] GameObject celebrationPrefab;
     [SerializeField] AudioClip collectSound;
-    [Range(1, 30)][SerializeField] int count = 20;
+    [Range(1, 30)] [SerializeField] int count = 20;
 
     [Header("Where they appear")]
     [Tooltip("Center of the area (X, Z). Defaults to the spawn point.")]

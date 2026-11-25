@@ -147,6 +147,7 @@ public class SitController : NetworkBehaviour
     // ---------- Temporary button (bottom-right, above Hug/Kiss) ----------
     void OnGUI()
     {
+        if (PhotoMode.HideUI) return;
         if (!IsSpawned || !IsOwner) return;
 
         bool canSit = !IsSitting && FindSeat() >= 0;

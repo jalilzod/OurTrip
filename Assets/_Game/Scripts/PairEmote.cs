@@ -1,4 +1,4 @@
-using System.Collections;
+ using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
@@ -28,6 +28,9 @@ public class PairEmote : NetworkBehaviour
     [SerializeField] float maxDistance = 2.5f;
     [Tooltip("Distance between the two characters' feet during the emote. Tune for your models.")]
     [SerializeField] float[] gap = { 0.45f, 0.5f };
+    [Tooltip("Sideways correction (meters) for each emote: Hug, Kiss. If the animation makes them " +
+             "end up beside each other, try 0.2 or -0.2 until they line up face to face.")]
+    [SerializeField] float[] sideOffset = { 0f, 0f };
     [SerializeField] float fade = 0.25f;
     [Tooltip("Optional: hearts particle prefab spawned above you both.")]
     [SerializeField] ParticleSystem heartsPrefab;
@@ -157,12 +160,15 @@ public class PairEmote : NetworkBehaviour
         if (initiator == null || accepter == null) return;
 
         float g = gap != null && type < gap.Length ? gap[type] : 0.5f;
+        float side = sideOffset != null && type < sideOffset.Length ? sideOffset[type] : 0f;
+        Vector3 right = Vector3.Cross(Vector3.up, dir); // the asker's right-hand side
         initiator.waitingUntil = 0f;
 
+        // Each one is shifted to the opposite side, cancelling the sideways lean of the animation.
         initiator.StartCoroutine(initiator.Perform(InitiatorState[type],
-            center - dir * (g * 0.5f), Quaternion.LookRotation(dir)));
+            center - dir * (g * 0.5f) + right * side, Quaternion.LookRotation(dir)));
         accepter.StartCoroutine(accepter.Perform(AccepterState[type],
-            center + dir * (g * 0.5f), Quaternion.LookRotation(-dir)));
+            center + dir * (g * 0.5f) - right * side, Quaternion.LookRotation(-dir)));
 
         if (heartsPrefab != null)
         {
@@ -210,6 +216,7 @@ public class PairEmote : NetworkBehaviour
     // ---------- Temporary UI ----------
     void OnGUI()
     {
+        if (PhotoMode.HideUI) return;
         if (!IsSpawned || !IsOwner) return;
 
         float s = Screen.height / 540f;

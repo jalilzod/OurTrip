@@ -199,6 +199,7 @@ public class PlayerController : NetworkBehaviour
     // ---------- Visible joystick (only on touch devices, only for your own player) ----------
     void OnGUI()
     {
+        if (PhotoMode.HideUI) return;
         if (!IsSpawned || !IsOwner || Touchscreen.current == null) return;
         if (Event.current.type != EventType.Repaint) return;
 
@@ -238,12 +239,12 @@ public class PlayerController : NetworkBehaviour
         var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
         float c = (size - 1) * 0.5f;
         for (int y = 0; y < size; y++)
-            for (int x = 0; x < size; x++)
-            {
-                float d = Vector2.Distance(new Vector2(x, y), new Vector2(c, c)) / c;
-                float a = Mathf.Clamp01((1f - d) * size * 0.5f); // soft edge
-                tex.SetPixel(x, y, new Color(1f, 1f, 1f, a));
-            }
+        for (int x = 0; x < size; x++)
+        {
+            float d = Vector2.Distance(new Vector2(x, y), new Vector2(c, c)) / c;
+            float a = Mathf.Clamp01((1f - d) * size * 0.5f); // soft edge
+            tex.SetPixel(x, y, new Color(1f, 1f, 1f, a));
+        }
         tex.Apply();
         return tex;
     }

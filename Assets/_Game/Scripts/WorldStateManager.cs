@@ -34,8 +34,7 @@ public class WorldStateManager : NetworkBehaviour
     public event Action Changed;
 
     [SerializeField] Light sun;
-    [SerializeField]
-    TimePreset[] presets =
+    [SerializeField] TimePreset[] presets =
     {
         new TimePreset { name = "Day" },
         new TimePreset { name = "Sunset", sunRotation = new Vector3(8f, -60f, 0f),
@@ -51,7 +50,7 @@ public class WorldStateManager : NetworkBehaviour
     [Tooltip("Rain clouds make the sun this much weaker (0.5 = half).")]
     [SerializeField] float rainLightMultiplier = 0.5f;
     [SerializeField] Color rainFogColor = new Color(0.50f, 0.55f, 0.60f);
-    [Range(0f, 1f)][SerializeField] float rainFogBlend = 0.6f;
+    [Range(0f, 1f)] [SerializeField] float rainFogBlend = 0.6f;
     [Tooltip("Rain spawns this high above the camera.")]
     [SerializeField] float rainHeight = 15f;
 
@@ -178,6 +177,7 @@ public class WorldStateManager : NetworkBehaviour
     // ---------- Temporary buttons (top-left). Replaced by designed UI later. ----------
     void OnGUI()
     {
+        if (PhotoMode.HideUI) return;
         var nm = NetworkManager.Singleton;
         if (nm == null || !nm.IsConnectedClient && !nm.IsServer) return;
 

@@ -146,6 +146,7 @@ public class NetworkBootstrap : MonoBehaviour
     // ---------- Temporary debug UI (top-right corner, so the left half stays free for the joystick) ----------
     void OnGUI()
     {
+        if (PhotoMode.HideUI) return;
         var nm = NetworkManager.Singleton;
         if (nm == null) return;
 
@@ -206,6 +207,9 @@ public class NetworkBootstrap : MonoBehaviour
                 status = "Ready";
             }
         }
+
+        // Version shown in-game, so you can check which build is installed (Player Settings > Version).
+        GUILayout.Label("Our Trip v" + Application.version);
 
         GUILayout.EndVertical();
         GUILayout.EndArea();
