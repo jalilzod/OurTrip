@@ -8741,6 +8741,7 @@ GameObject:
   - component: {fileID: 1939256124}
   - component: {fileID: 1939256125}
   - component: {fileID: 1939256126}
+  - component: {fileID: 1939256127}
   m_Layer: 0
   m_Name: WorldState
   m_TagString: Untagged
@@ -9034,6 +9035,24 @@ MonoBehaviour:
   - {r: 0.85, g: 0.5, b: 1, a: 1}
   - {r: 1, g: 1, b: 1, a: 1}
   finishMessage: Every night with you is my favorite.
+--- !u!114 &1939256127
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1939256118}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f63fda1832694c4bb80b4e327c8df19, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LoveNotes
+  ShowTopMostFoldoutHeaderGroup: 1
+  envelopePrefab: {fileID: 3094467448759472936, guid: 8301aeac7121c49198dd29f864aa0b06, type: 3}
+  boyName: Derik
+  girlName: My love
+  openDistance: 2
+  openSound: {fileID: 8300000, guid: bcd39f6ac945dd047b91371eb18a5d3f, type: 3}
 --- !u!1001 &1959050333
 PrefabInstance:
   m_ObjectHideFlags: 0
