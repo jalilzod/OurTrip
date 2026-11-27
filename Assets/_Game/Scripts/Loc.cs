@@ -154,5 +154,11 @@ public static class Loc
         { "NEW, find it!", "НОВОЕ, найди его!" },
         { "No letters yet. Write the first one!", "Писем пока нет. Напиши первое!" },
         { "Open the letter", "Открыть письмо" },
+
+        // Gifts
+        { "Gift given  <3", "Подарок вручён  <3" },
+        { "You got a bouquet!  <3", "Тебе подарили букет!  <3" },
+        { "You got a seashell!  <3", "Тебе подарили ракушку!  <3" },
+        { "Flowers {0}   ·   Shells {1}", "Цветы {0}   ·   Ракушки {1}" },
     };
 }
