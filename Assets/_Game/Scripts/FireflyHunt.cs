@@ -23,9 +23,9 @@ public class FireflyHunt : NetworkBehaviour
 
     [Header("How many")]
     [Tooltip("How many fireflies are in the world each night.")]
-    [Range(1, 300)][SerializeField] int count = 150;
+    [Range(1, 300)] [SerializeField] int count = 150;
     [Tooltip("Fireflies come in little groups of this size (1 = all spread out).")]
-    [Range(1, 8)][SerializeField] int groupSize = 4;
+    [Range(1, 8)] [SerializeField] int groupSize = 4;
     [Tooltip("How many you need to catch together to win.")]
     [SerializeField] int goal = 20;
     [Tooltip("A caught firefly comes back after a random time between these seconds.")]
@@ -59,9 +59,6 @@ public class FireflyHunt : NetworkBehaviour
     int builtSeed = -1;
     WorldStateManager.TimeOfDay lastTime = WorldStateManager.TimeOfDay.Day;
 
-    string message;
-    float messageUntil;
-    GUIStyle counterStyle, messageStyle;
 
     static bool IsNight =>
         WorldStateManager.Instance != null &&
@@ -174,8 +171,7 @@ public class FireflyHunt : NetworkBehaviour
     [Rpc(SendTo.Everyone)]
     void CelebrateRpc()
     {
-        message = "You caught the fireflies together!";
-        messageUntil = Time.time + 6f;
+        UiTheme.Toast(Loc.T("You caught the fireflies together!"), 6f);
 
         if (celebrationPrefab == null) return;
         foreach (var pc in FindObjectsByType<PlayerController>(FindObjectsSortMode.None))
@@ -281,28 +277,10 @@ public class FireflyHunt : NetworkBehaviour
     void OnGUI()
     {
         if (PhotoMode.HideUI || !IsSpawned) return;
-
-        if (counterStyle == null)
-        {
-            counterStyle = new GUIStyle(GUI.skin.box) { alignment = TextAnchor.MiddleCenter };
-            messageStyle = new GUIStyle(GUI.skin.box) { alignment = TextAnchor.MiddleCenter, wordWrap = true };
-        }
-        float u = Screen.height / 540f;
-        counterStyle.fontSize = Mathf.RoundToInt(20 * u);
-        messageStyle.fontSize = Mathf.RoundToInt(22 * u);
-        GUI.matrix = Matrix4x4.identity;
-        float sw = Screen.width;
-
-        if (IsNight && seed.Value != 0)
-        {
-            int caught = caughtTotal.Value + localPending.Count;
-            string text = caught >= goal
-                ? "Fireflies caught: " + caught + "  <3"
-                : "Fireflies  " + caught + " / " + goal;
-            GUI.Box(new Rect(sw * 0.5f - 130f * u, 10f * u, 260f * u, 40f * u), text, counterStyle);
-        }
-
-        if (message != null && Time.time < messageUntil)
-            GUI.Box(new Rect(sw * 0.5f - 220f * u, 70f * u, 440f * u, 60f * u), message, messageStyle);
+        if (!IsNight || seed.Value == 0) return;
+        UiTheme.Begin();
+        int caught = caughtTotal.Value + localPending.Count;
+        UiTheme.PillLabel(UiTheme.CounterRect(0),
+            caught >= goal ? Loc.F("Fireflies caught: {0}  <3", caught) : Loc.F("Fireflies  {0} / {1}", caught, goal));
     }
 }

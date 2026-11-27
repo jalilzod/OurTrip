@@ -31,7 +31,6 @@ public class MusicRadio : NetworkBehaviour
     readonly NetworkVariable<int> current = new NetworkVariable<int>(-1);       // -1 = off
     readonly NetworkVariable<double> startTime = new NetworkVariable<double>(0); // server time when it started
 
-    bool panelOpen;
     float nextDriftCheck;
 
     float Volume
@@ -125,38 +124,39 @@ public class MusicRadio : NetworkBehaviour
         if (PhotoMode.HideUI) return;
         var nm = NetworkManager.Singleton;
         if (nm == null || !nm.IsConnectedClient && !nm.IsServer) return;
+        if (!UiTheme.MenuOpen) return;
+        UiTheme.Begin();
+        float u = UiTheme.U;
 
-        float s = Screen.height / 540f;
-        GUI.matrix = Matrix4x4.Scale(new Vector3(s, s, 1f));
-
-        if (GUI.Button(new Rect(130f, 10f, 110f, 44f), panelOpen ? "Close" : "Music"))
-            panelOpen = !panelOpen;
-        if (!panelOpen) return;
+        bool open = UiTheme.OpenPanel == "music";
+        if (UiTheme.RoundButton(UiTheme.MenuSlot(1), "music", open)) UiTheme.OpenPanel = open ? null : "music";
+        if (!open) return;
 
         int n = tracks != null ? tracks.Length : 0;
-        string title = current.Value >= 0 && current.Value < n ? tracks[current.Value].title : "(off)";
+        string title = current.Value >= 0 && current.Value < n ? tracks[current.Value].title : Loc.T("Nothing playing");
 
-        GUILayout.BeginArea(new Rect(130f, 62f, 260f, 260f));
-        GUILayout.BeginVertical(GUI.skin.box);
+        var p = UiTheme.MenuPanel(1, 300f, 214f);
+        UiTheme.PanelBox(p);
+        float x = p.x + 18f * u, w = p.width - 36f * u;
 
-        GUILayout.Label("Now playing: " + title);
+        GUI.Label(new Rect(x, p.y + 14f * u, w, 18f * u), Loc.T("NOW PLAYING  ·  FOR BOTH OF US"), UiTheme.Caption);
+        GUI.Label(new Rect(x, p.y + 34f * u, w, 30f * u), title, UiTheme.Title);
 
-        GUILayout.BeginHorizontal();
-        if (GUILayout.Button("<", GUILayout.Height(40)) && n > 0)
+        float size = 58f * u, gap = 18f * u, rowX = p.center.x - (size * 3f + gap * 2f) * 0.5f, rowY = p.y + 72f * u;
+        if (UiTheme.RoundButton(new Rect(rowX, rowY, size, size), "prev", false, n > 0))
             Play(current.Value < 0 ? n - 1 : current.Value - 1);
-        if (GUILayout.Button(current.Value < 0 ? "Play" : "Stop", GUILayout.Height(40)))
+        bool playing = current.Value >= 0;
+        if (UiTheme.RoundButton(new Rect(rowX + size + gap, rowY, size, size), playing ? "stop" : "play", true, n > 0))
         {
-            if (current.Value < 0) Play(0); else Stop();
+            if (playing) Stop(); else Play(0);
         }
-        if (GUILayout.Button(">", GUILayout.Height(40)) && n > 0)
+        if (UiTheme.RoundButton(new Rect(rowX + 2f * (size + gap), rowY, size, size), "next", false, n > 0))
             Play(current.Value < 0 ? 0 : current.Value + 1);
-        GUILayout.EndHorizontal();
 
-        GUILayout.Label("My volume");
-        float v = GUILayout.HorizontalSlider(Volume, 0f, 1f, GUILayout.Height(30));
+        var vol = UiTheme.Icon("volume");
+        if (vol != null) GUI.DrawTexture(new Rect(x, p.y + 158f * u, 26f * u, 26f * u), vol, ScaleMode.ScaleToFit);
+        float v = GUI.HorizontalSlider(new Rect(x + 36f * u, p.y + 166f * u, w - 36f * u, 20f * u), Volume, 0f, 1f);
         if (!Mathf.Approximately(v, Volume)) Volume = v;
-
-        GUILayout.EndVertical();
-        GUILayout.EndArea();
+        GUI.Label(new Rect(x, p.yMax - 22f * u, w, 18f * u), Loc.T("Volume is only for your phone"), UiTheme.Small);
     }
 }

@@ -107,24 +107,22 @@ public class EmoteController : NetworkBehaviour
     }
 
     // ---------- Temporary on-screen buttons (bottom-right). Replaced by designed UI on Day 6-7. ----------
+    static readonly string[] Icons = { "wave", "dance", "kiss", "dance2" };
+
     void OnGUI()
     {
         if (PhotoMode.HideUI) return;
         if (!IsSpawned || !IsOwner) return;
+        UiTheme.Begin();
 
-        float s = Screen.height / 540f;
-        GUI.matrix = Matrix4x4.Scale(new Vector3(s, s, 1f));
-
-        float w = 90f, h = 50f, gap = 8f;
-        float x = Screen.width / s - (w + gap) * States.Length - 10f;
-        float y = 540f - h - 15f;
-
-        for (int i = 0; i < States.Length; i++)
+        // Left to right on screen: Wave, Dance, Dance 2, Kiss  (dock column 0 = rightmost)
+        int[] order = { 0, 1, 3, 2 };
+        for (int k = 0; k < order.Length; k++)
         {
-            string label = Labels[i];
-            if (i == current && Loops[i]) label = "Stop";
-            if (GUI.Button(new Rect(x + i * (w + gap), y, w, h), label))
-                Request(i);
+            int i = order[k];
+            var r = UiTheme.DockSlot(order.Length - 1 - k, 0);
+            bool active = i == current;
+            if (UiTheme.RoundButton(r, Icons[i], active)) Request(i);
         }
     }
 }

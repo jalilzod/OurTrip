@@ -153,12 +153,9 @@ public class SitController : NetworkBehaviour
         bool canSit = !IsSitting && FindSeat() >= 0;
         if (!IsSitting && !canSit) return;
 
-        float s = Screen.height / 540f;
-        GUI.matrix = Matrix4x4.Scale(new Vector3(s, s, 1f));
-        float sw = Screen.width / s;
-        var r = new Rect(sw - (90f + 8f) * 4 - 10f, 540f - 50f * 3 - 15f - 20f, 188f, 50f);
-
-        if (GUI.Button(r, IsSitting ? "Stand up" : "Sit"))
+        UiTheme.Begin();
+        if (UiTheme.PillButton(UiTheme.ActionRect(0), Loc.T(IsSitting ? "Stand up" : "Sit together"), IsSitting ? "stand" : "sit",
+                               IsSitting ? UiTheme.Kind.Normal : UiTheme.Kind.Accent))
         {
             if (IsSitting) StandUp(); else TrySit();
         }

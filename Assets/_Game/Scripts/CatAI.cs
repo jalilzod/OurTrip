@@ -208,9 +208,12 @@ public class CatAI : NetworkBehaviour
         if (PhotoMode.HideUI) return;
         var nm = NetworkManager.Singleton;
         if (nm == null || !nm.IsConnectedClient && !nm.IsServer) return;
-
-        float s = Screen.height / 540f;
-        GUI.matrix = Matrix4x4.Scale(new Vector3(s, s, 1f));
-        if (GUI.Button(new Rect(250f, 10f, 110f, 44f), "Cat, come!")) CallCat();
+        if (!UiTheme.MenuOpen) return;
+        UiTheme.Begin();
+        if (UiTheme.RoundButton(UiTheme.MenuSlot(2), "cat"))
+        {
+            CallCat();
+            UiTheme.Toast(Loc.T("Here, kitty kitty!"), 2f);
+        }
     }
 }

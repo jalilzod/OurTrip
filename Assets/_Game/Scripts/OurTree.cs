@@ -46,9 +46,6 @@ public class OurTree : NetworkBehaviour
 
     int shownStage = -1;
     float nextDayCheck;
-    string toast;
-    float toastUntil;
-    GUIStyle buttonStyle, labelStyle, toastStyle;
 
     static int Today => int.Parse(DateTime.Now.ToString("yyyyMMdd"));
     static int Me => CharacterVisuals.LocalChoice == 1 ? 1 : 0; // 0 = Boy, 1 = Girl
@@ -125,11 +122,11 @@ public class OurTree : NetworkBehaviour
         {
             if (growEffectPrefab != null) Destroy(Instantiate(growEffectPrefab, pos, Quaternion.identity).gameObject, 5f);
             if (growSound != null) AudioSource.PlayClipAtPoint(growSound, pos, 0.9f);
-            ShowToast(planted.Value && points.Value > 0 ? "Our tree grew!" : "We planted our seed!");
+            ShowToast(Loc.T(planted.Value && points.Value > 0 ? "Our tree grew!" : "We planted our seed!"));
         }
         else if (water)
         {
-            ShowToast("Watered! Waiting for your partner to water too.");
+            ShowToast(Loc.T("Watered! Waiting for your partner to water too."));
         }
     }
 
@@ -228,46 +225,28 @@ public class OurTree : NetworkBehaviour
         else if (!IWateredToday) WaterRpc(Me);
     }
 
-    void ShowToast(string text)
-    {
-        toast = text;
-        toastUntil = Time.time + 3f;
-    }
+    void ShowToast(string text) => UiTheme.Toast(text, 3f);
 
     void OnGUI()
     {
-        if (PhotoMode.HideUI || !IsSpawned) return;
+        if (PhotoMode.HideUI || !IsSpawned || !Near()) return;
+        UiTheme.Begin();
+        float u = UiTheme.U;
 
-        if (buttonStyle == null)
-        {
-            buttonStyle = new GUIStyle(GUI.skin.button);
-            labelStyle = new GUIStyle(GUI.skin.box) { alignment = TextAnchor.MiddleCenter };
-            toastStyle = new GUIStyle(GUI.skin.box) { alignment = TextAnchor.MiddleCenter, wordWrap = true };
-        }
-        float u = Screen.height / 540f;
-        buttonStyle.fontSize = Mathf.RoundToInt(20 * u);
-        labelStyle.fontSize = Mathf.RoundToInt(17 * u);
-        toastStyle.fontSize = Mathf.RoundToInt(20 * u);
-        GUI.matrix = Matrix4x4.identity;
-        float sw = Screen.width, sh = Screen.height;
+        int stage = StageIndex();
+        string info = stage < 0
+            ? Loc.T("A perfect spot for our tree")
+            : Loc.F("{0}  ·  grown {1} days", Loc.T(stage < stageNames.Length ? stageNames[stage] : "Our tree"), points.Value);
+        var btn = UiTheme.ActionRect(1);
+        UiTheme.PillLabel(new Rect(btn.center.x - 170f * u, btn.y - 46f * u, 340f * u, 38f * u), info);
 
-        if (Near())
-        {
-            int stage = StageIndex();
-            string info = stage < 0
-                ? "A perfect spot for our tree"
-                : (stage < stageNames.Length ? stageNames[stage] : "Our tree") + "  ·  grown " + points.Value + " days";
-            GUI.Box(new Rect(sw * 0.5f - 170f * u, sh - 185f * u, 340f * u, 36f * u), info, labelStyle);
-
-            string label = !planted.Value ? "Plant our seed"
-                         : IWateredToday ? (mask.Value == 3 ? "Watered together today  <3" : "Watered today")
-                         : "Water our tree";
-            GUI.enabled = !planted.Value || !IWateredToday;
-            if (GUI.Button(new Rect(sw * 0.5f - 130f * u, sh - 140f * u, 260f * u, 55f * u), label, buttonStyle)) Use();
-            GUI.enabled = true;
-        }
-
-        if (toast != null && Time.time < toastUntil)
-            GUI.Box(new Rect(sw * 0.5f - 220f * u, sh * 0.3f, 440f * u, 60f * u), toast, toastStyle);
+        string label = Loc.T(!planted.Value ? "Plant our seed"
+                     : IWateredToday ? (mask.Value == 3 ? "Watered together today  <3" : "Watered, waiting for you two")
+                     : "Water our tree");
+        string icon = !planted.Value ? "seed" : "water";
+        bool can = !planted.Value || !IWateredToday;
+        if (UiTheme.PillButton(new Rect(btn.center.x - 160f * u, btn.y, 320f * u, btn.height), label, icon,
+                               can ? UiTheme.Kind.Accent : UiTheme.Kind.Normal, can))
+            Use();
     }
 }

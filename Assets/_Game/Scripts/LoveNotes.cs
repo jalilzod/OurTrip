@@ -60,10 +60,7 @@ public class LoveNotes : NetworkBehaviour
     string draft = "";
     int openIndex = -1;
     Vector2 lettersScroll;
-    string toast;
-    float toastUntil;
     bool greeted;
-    GUIStyle box, text, title, button, area;
 
     static int Me => CharacterVisuals.LocalChoice == 1 ? 1 : 0;
     string NameOf(int author) => author == 1 ? girlName : boyName;
@@ -139,7 +136,7 @@ public class LoveNotes : NetworkBehaviour
             for (int i = 0; i < notes.Count; i++)
                 if (!notes[i].read && notes[i].author != Me)
                 {
-                    ShowToast("A letter is waiting for you somewhere...");
+                    ShowToast(Loc.T("A letter is waiting for you somewhere..."));
                     greeted = true;
                     break;
                 }
@@ -171,7 +168,7 @@ public class LoveNotes : NetworkBehaviour
         });
         draft = "";
         writing = false;
-        ShowToast("Your note is waiting here for " + NameOf(1 - Me));
+        ShowToast(Loc.F("Your note is waiting here for {0}", NameOf(1 - Me)));
     }
 
     static FixedString512Bytes Trim(string s)
@@ -240,7 +237,7 @@ public class LoveNotes : NetworkBehaviour
         return new SaveFile();
     }
 
-    void ShowToast(string t) { toast = t; toastUntil = Time.time + 4f; }
+    void ShowToast(string t) => UiTheme.Toast(t, 4f);
 
     // Don't walk around while typing (WASD would move the character in the editor).
     bool lockedByMe;
@@ -258,92 +255,85 @@ public class LoveNotes : NetworkBehaviour
     static string FormatDate(int d)
     {
         return DateTime.TryParseExact(d.ToString(), "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt)
-            ? dt.ToString("d MMMM yyyy", CultureInfo.InvariantCulture) : "";
+            ? dt.ToString("d MMMM yyyy", Loc.Culture) : "";
     }
 
     // ---------- UI ----------
     void OnGUI()
     {
         if (PhotoMode.HideUI || !IsSpawned) return;
+        UiTheme.Begin();
+        float u = UiTheme.U;
 
-        float u = Screen.height / 540f;
-        if (box == null)
+        // Menu column: Write (slot 4) and Letters (slot 5)
+        if (UiTheme.MenuOpen)
         {
-            box = new GUIStyle(GUI.skin.box);
-            text = new GUIStyle(GUI.skin.label) { wordWrap = true };
-            title = new GUIStyle(GUI.skin.label) { fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
-            button = new GUIStyle(GUI.skin.button);
-            area = new GUIStyle(GUI.skin.textArea) { wordWrap = true };
+            if (UiTheme.RoundButton(UiTheme.MenuSlot(4), "write", writing))
+            { writing = !writing; showLetters = false; openIndex = -1; UiTheme.OpenPanel = null; }
+            if (UiTheme.RoundButton(UiTheme.MenuSlot(5), "letters", showLetters))
+            { showLetters = !showLetters; writing = false; openIndex = -1; UiTheme.OpenPanel = null; }
         }
-        text.fontSize = Mathf.RoundToInt(20 * u);
-        title.fontSize = Mathf.RoundToInt(24 * u);
-        button.fontSize = Mathf.RoundToInt(18 * u);
-        area.fontSize = Mathf.RoundToInt(20 * u);
-        box.fontSize = Mathf.RoundToInt(18 * u);
-        GUI.matrix = Matrix4x4.identity;
-        float sw = Screen.width, sh = Screen.height;
 
-        // Top-left row: next to World / Music / Cat / Photo
-        if (GUI.Button(new Rect(490f * u, 10f * u, 110f * u, 44f * u), "Write", button)) { writing = !writing; showLetters = false; openIndex = -1; }
-        if (GUI.Button(new Rect(610f * u, 10f * u, 110f * u, 44f * u), "Letters", button)) { showLetters = !showLetters; writing = false; openIndex = -1; }
-
-        // Open a letter nearby
+        // A letter for me is right here
         int near = NearestLetterForMe();
         if (near >= 0 && openIndex < 0 && !writing &&
-            GUI.Button(new Rect(sw * 0.5f - 120f * u, sh - 205f * u, 240f * u, 55f * u), "Open letter", button))
+            UiTheme.PillButton(UiTheme.ActionRect(3), Loc.T("Open the letter"), "letter_open", UiTheme.Kind.Active))
             Open(near);
 
-        var panel = new Rect(sw * 0.5f - 280f * u, sh * 0.5f - 190f * u, 560f * u, 380f * u);
+        if (!writing && openIndex < 0 && !showLetters) return;
+
+        UiTheme.Dim();
+        var p = UiTheme.CenterRect(560f, 380f);
+        UiTheme.PanelBox(p);
+        float x = p.x + 24f * u, w = p.width - 48f * u;
+        var closeRect = new Rect(p.xMax - 60f * u, p.y + 12f * u, 46f * u, 46f * u);
 
         if (writing)
         {
-            GUI.Box(panel, "", box);
-            GUI.Label(new Rect(panel.x, panel.y + 10f * u, panel.width, 36f * u), "A note for " + NameOf(1 - Me), title);
-            draft = GUI.TextArea(new Rect(panel.x + 20f * u, panel.y + 55f * u, panel.width - 40f * u, 220f * u), draft, MaxChars, area);
-            GUI.Label(new Rect(panel.x + 20f * u, panel.y + 280f * u, 200f * u, 30f * u), draft.Length + " / " + MaxChars, text);
-            if (GUI.Button(new Rect(panel.x + 20f * u, panel.y + 315f * u, 250f * u, 50f * u), "Leave it here", button)) LeaveNote();
-            if (GUI.Button(new Rect(panel.xMax - 190f * u, panel.y + 315f * u, 170f * u, 50f * u), "Cancel", button)) writing = false;
+            GUI.Label(new Rect(p.x, p.y + 16f * u, p.width, 34f * u), Loc.F("A note for {0}", NameOf(1 - Me)), UiTheme.Title);
+            if (UiTheme.RoundButton(closeRect, "close")) writing = false;
+            var area = new GUIStyle(UiTheme.Field) { alignment = TextAnchor.UpperLeft, wordWrap = true };
+            draft = GUI.TextArea(new Rect(x, p.y + 64f * u, w, 210f * u), draft, MaxChars, area);
+            GUI.Label(new Rect(x, p.y + 280f * u, 200f * u, 24f * u), draft.Length + " / " + MaxChars, new GUIStyle(UiTheme.Small) { alignment = TextAnchor.MiddleLeft });
+            if (UiTheme.PillButton(new Rect(x, p.yMax - 70f * u, w, 54f * u), Loc.T("Leave it here"), "heart",
+                                   UiTheme.Kind.Accent, draft.Trim().Length > 0))
+                LeaveNote();
         }
         else if (openIndex >= 0 && openIndex < notes.Count)
         {
             var n = notes[openIndex];
-            GUI.Box(panel, "", box);
-            GUI.Label(new Rect(panel.x, panel.y + 10f * u, panel.width, 36f * u), "From " + NameOf(n.author), title);
-            GUI.Label(new Rect(panel.x + 25f * u, panel.y + 55f * u, panel.width - 50f * u, 230f * u), n.text.ToString(), text);
-            GUI.Label(new Rect(panel.x + 25f * u, panel.y + 285f * u, panel.width - 50f * u, 30f * u), FormatDate(n.date), text);
-            if (GUI.Button(new Rect(panel.xMax - 190f * u, panel.y + 315f * u, 170f * u, 50f * u), "Close", button)) openIndex = -1;
+            GUI.Label(new Rect(p.x, p.y + 16f * u, p.width, 34f * u), Loc.F("From {0}", NameOf(n.author)), UiTheme.Title);
+            if (UiTheme.RoundButton(closeRect, "close")) openIndex = -1;
+            GUI.Label(new Rect(x, p.y + 66f * u, w, 240f * u), n.text.ToString(), UiTheme.Body);
+            GUI.Label(new Rect(x, p.yMax - 40f * u, w, 24f * u), FormatDate(n.date), new GUIStyle(UiTheme.Small) { alignment = TextAnchor.MiddleRight });
         }
         else if (showLetters)
         {
-            GUI.Box(panel, "", box);
-            GUI.Label(new Rect(panel.x, panel.y + 10f * u, panel.width, 36f * u), "Our letters", title);
+            GUI.Label(new Rect(p.x, p.y + 16f * u, p.width, 34f * u), Loc.T("Our letters"), UiTheme.Title);
+            if (UiTheme.RoundButton(closeRect, "close")) showLetters = false;
 
-            var view = new Rect(panel.x + 15f * u, panel.y + 55f * u, panel.width - 30f * u, 250f * u);
-            float rowH = 50f * u;
-            var content = new Rect(0, 0, view.width - 20f * u, Mathf.Max(view.height, notes.Count * (rowH + 6f * u)));
+            var view = new Rect(x, p.y + 64f * u, w, p.height - 84f * u);
+            float rowH = 54f * u, gap = 8f * u;
+            var content = new Rect(0, 0, view.width - 18f * u, Mathf.Max(view.height, notes.Count * (rowH + gap)));
             lettersScroll = GUI.BeginScrollView(view, lettersScroll, content);
             float y = 0f;
             for (int i = notes.Count - 1; i >= 0; i--) // newest first
             {
                 var n = notes[i];
                 bool mine = n.author == Me;
-                string status = mine ? (n.read ? "read" : "not read yet") : (n.read ? "" : "NEW - find it!");
-                string label = (mine ? "To " + NameOf(1 - Me) : "From " + NameOf(n.author)) + "  ·  " + FormatDate(n.date) +
+                string status = Loc.T(mine ? (n.read ? "read" : "not read yet") : (n.read ? "" : "NEW, find it!"));
+                string label = (mine ? Loc.F("To {0}", NameOf(1 - Me)) : Loc.F("From {0}", NameOf(n.author))) + "  ·  " + FormatDate(n.date) +
                                (status.Length > 0 ? "  ·  " + status : "");
-                // Unopened letters for me must be found in the world first.
-                bool canOpen = mine || n.read;
-                GUI.enabled = canOpen;
-                if (GUI.Button(new Rect(0, y, content.width, rowH), label, button)) Open(i);
-                GUI.enabled = true;
-                y += rowH + 6f * u;
+                bool canOpen = mine || n.read; // new letters must be found in the world first
+                bool isNew = !mine && !n.read;
+                if (UiTheme.PillButton(new Rect(0, y, content.width, rowH), label, mine ? "write" : "letters",
+                                       isNew ? UiTheme.Kind.Active : UiTheme.Kind.Normal, canOpen))
+                    Open(i);
+                y += rowH + gap;
             }
-            if (notes.Count == 0) GUI.Label(new Rect(0, 0, content.width, 40f * u), "No letters yet. Write the first one!", text);
+            if (notes.Count == 0)
+                GUI.Label(new Rect(0, 0, content.width, 60f * u), Loc.T("No letters yet. Write the first one!"), UiTheme.BodyCenter);
             GUI.EndScrollView();
-
-            if (GUI.Button(new Rect(panel.xMax - 190f * u, panel.y + 315f * u, 170f * u, 50f * u), "Close", button)) showLetters = false;
         }
-
-        if (toast != null && Time.time < toastUntil)
-            GUI.Box(new Rect(sw * 0.5f - 230f * u, sh * 0.22f, 460f * u, 50f * u), toast, box);
     }
 }

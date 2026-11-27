@@ -203,35 +203,38 @@ public class PlayerController : NetworkBehaviour
         if (!IsSpawned || !IsOwner || Touchscreen.current == null) return;
         if (Event.current.type != EventType.Repaint) return;
 
+        UiTheme.Begin();
         if (circleTex == null) circleTex = MakeCircleTexture(128);
-        GUI.matrix = Matrix4x4.identity;
+        var baseTex = UiTheme.JoyBase != null ? UiTheme.JoyBase : circleTex;
+        var knobTex = UiTheme.JoyKnob != null ? UiTheme.JoyKnob : circleTex;
 
         float r = JoystickRadius;
         Color old = GUI.color;
 
         if (stickTouchId == -1)
         {
-            // Hint: faint ring where the joystick usually is.
-            Vector2 hint = new Vector2(Screen.width * 0.15f, Screen.height * 0.25f);
-            GUI.color = new Color(1f, 1f, 1f, 0.15f);
-            DrawCircle(hint, r);
+            // Hint: faint joystick where your thumb usually goes.
+            Vector2 hint = new Vector2(Screen.width * 0.14f, Screen.height * 0.24f);
+            GUI.color = new Color(1f, 1f, 1f, 0.35f);
+            DrawCircle(hint, r, baseTex);
+            DrawCircle(hint, r * 0.38f, knobTex);
         }
         else
         {
-            GUI.color = new Color(1f, 1f, 1f, 0.25f);
-            DrawCircle(stickStart, r);                               // base
-            GUI.color = new Color(1f, 1f, 1f, 0.6f);
-            DrawCircle(stickStart + stickVector * r, r * 0.4f);      // knob
+            GUI.color = new Color(1f, 1f, 1f, 0.9f);
+            DrawCircle(stickStart, r, baseTex);
+            GUI.color = Color.white;
+            DrawCircle(stickStart + stickVector * r, r * 0.38f, knobTex);
         }
 
         GUI.color = old;
     }
 
     // Input System uses bottom-left origin; IMGUI uses top-left.
-    static void DrawCircle(Vector2 screenCenter, float radius)
+    static void DrawCircle(Vector2 screenCenter, float radius, Texture2D tex)
     {
         var rect = new Rect(screenCenter.x - radius, Screen.height - screenCenter.y - radius, radius * 2f, radius * 2f);
-        GUI.DrawTexture(rect, circleTex);
+        GUI.DrawTexture(rect, tex);
     }
 
     static Texture2D MakeCircleTexture(int size)

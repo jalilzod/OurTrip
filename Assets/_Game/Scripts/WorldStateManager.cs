@@ -68,7 +68,6 @@ public class WorldStateManager : NetworkBehaviour
     Color curSunColor, tgtSunColor, curFog, tgtFog;
     float curIntensity, tgtIntensity, curAmbient, tgtAmbient;
     bool initialized;
-    bool menuOpen;
 
     void Awake()
     {
@@ -175,27 +174,36 @@ public class WorldStateManager : NetworkBehaviour
     }
 
     // ---------- Temporary buttons (top-left). Replaced by designed UI later. ----------
+    static readonly string[] TimeIcons = { "day", "sunset", "night" };
+
     void OnGUI()
     {
         if (PhotoMode.HideUI) return;
         var nm = NetworkManager.Singleton;
         if (nm == null || !nm.IsConnectedClient && !nm.IsServer) return;
+        if (!UiTheme.MenuOpen) return;
+        UiTheme.Begin();
+        float u = UiTheme.U;
 
-        float s = Screen.height / 540f;
-        GUI.matrix = Matrix4x4.Scale(new Vector3(s, s, 1f));
+        bool open = UiTheme.OpenPanel == "world";
+        if (UiTheme.RoundButton(UiTheme.MenuSlot(0), "world", open)) UiTheme.OpenPanel = open ? null : "world";
+        if (!open) return;
 
-        if (GUI.Button(new Rect(10f, 10f, 110f, 44f), menuOpen ? "Close" : "World"))
-            menuOpen = !menuOpen;
-        if (!menuOpen) return;
+        var p = UiTheme.MenuPanel(0, 270f, 196f);
+        UiTheme.PanelBox(p);
+        float x = p.x + 18f * u, w = p.width - 36f * u;
 
-        float y = 62f;
-        for (int i = 0; i < presets.Length; i++)
+        GUI.Label(new Rect(x, p.y + 14f * u, w, 18f * u), Loc.T("TIME OF DAY"), UiTheme.Caption);
+        float size = 64f * u, gap = (w - size * 3f) / 2f;
+        for (int i = 0; i < presets.Length && i < 3; i++)
         {
-            string label = presets[i].name + (timeOfDay.Value == i ? "  *" : "");
-            if (GUI.Button(new Rect(10f, y, 110f, 44f), label)) RequestTime((TimeOfDay)i);
-            y += 50f;
+            var r = new Rect(x + i * (size + gap), p.y + 36f * u, size, size);
+            if (UiTheme.RoundButton(r, TimeIcons[i], timeOfDay.Value == i)) RequestTime((TimeOfDay)i);
         }
-        if (GUI.Button(new Rect(10f, y, 110f, 44f), raining.Value ? "Rain: ON" : "Rain: OFF"))
+
+        GUI.Label(new Rect(x, p.y + 112f * u, w, 18f * u), Loc.T("WEATHER"), UiTheme.Caption);
+        if (UiTheme.PillButton(new Rect(x, p.y + 134f * u, w, 46f * u), Loc.T(raining.Value ? "Rain is on" : "Make it rain"), "rain",
+                               raining.Value ? UiTheme.Kind.Active : UiTheme.Kind.Normal))
             RequestRain(!raining.Value);
     }
 }

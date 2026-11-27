@@ -23,21 +23,19 @@ public class LanternChallenge : NetworkBehaviour
     [SerializeField] Vector2 secondsBetweenBursts = new Vector2(0.3f, 1.1f);
     [SerializeField] AudioClip[] boomSounds;
     [Tooltip("Colors for the bursts (picked at random).")]
-    [SerializeField]
-    Color[] colors =
+    [SerializeField] Color[] colors =
     {
         new Color(1f, 0.35f, 0.55f), new Color(1f, 0.8f, 0.3f), new Color(0.5f, 0.8f, 1f),
         new Color(0.7f, 1f, 0.5f), new Color(0.85f, 0.5f, 1f), Color.white,
     };
 
     [Header("Message")]
-    [TextArea][SerializeField] string finishMessage = "Every night with you is my favorite.";
+    [TextArea] [SerializeField] string finishMessage = "Every night with you is my favorite.";
 
     readonly NetworkVariable<int> litMask = new NetworkVariable<int>(0);
     WorldStateManager.TimeOfDay lastTime = WorldStateManager.TimeOfDay.Day;
     bool showing;
     float messageUntil;
-    GUIStyle counterStyle, buttonStyle, messageStyle;
 
     static bool IsNight =>
         WorldStateManager.Instance != null &&
@@ -159,40 +157,23 @@ public class LanternChallenge : NetworkBehaviour
     void OnGUI()
     {
         if (PhotoMode.HideUI || !IsSpawned) return;
-
-        if (counterStyle == null)
-        {
-            counterStyle = new GUIStyle(GUI.skin.box) { alignment = TextAnchor.MiddleCenter };
-            buttonStyle = new GUIStyle(GUI.skin.button);
-            messageStyle = new GUIStyle(GUI.skin.label)
-            { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold, wordWrap = true };
-        }
-        float u = Screen.height / 540f;
-        counterStyle.fontSize = Mathf.RoundToInt(20 * u);
-        buttonStyle.fontSize = Mathf.RoundToInt(20 * u);
-        messageStyle.fontSize = Mathf.RoundToInt(34 * u);
-        GUI.matrix = Matrix4x4.identity;
-        float sw = Screen.width, sh = Screen.height;
+        UiTheme.Begin();
+        float u = UiTheme.U;
 
         if (IsNight && Count > 0)
         {
-            string text = LitCount >= Count ? "All lanterns lit  <3" : "Lanterns  " + LitCount + " / " + Count;
-            GUI.Box(new Rect(sw * 0.5f - 130f * u, 56f * u, 260f * u, 36f * u), text, counterStyle);
+            UiTheme.PillLabel(UiTheme.CounterRect(1),
+                LitCount >= Count ? Loc.T("All lanterns lit  <3") : Loc.F("Lanterns  {0} / {1}", LitCount, Count));
 
             if (NearestUnlit() >= 0 &&
-                GUI.Button(new Rect(sw * 0.5f - 100f * u, sh - 75f * u, 200f * u, 55f * u), "Light lantern", buttonStyle))
+                UiTheme.PillButton(UiTheme.ActionRect(2), Loc.T("Light the lantern"), "lantern", UiTheme.Kind.Accent))
                 TryLightNearest();
         }
 
         if (Time.time < messageUntil && !string.IsNullOrEmpty(finishMessage))
         {
-            var r = new Rect(sw * 0.1f, sh * 0.18f, sw * 0.8f, 120f * u);
-            var old = messageStyle.normal.textColor;
-            messageStyle.normal.textColor = new Color(0f, 0f, 0f, 0.6f);
-            GUI.Label(new Rect(r.x + 3f, r.y + 3f, r.width, r.height), finishMessage, messageStyle);
-            messageStyle.normal.textColor = new Color(1f, 0.92f, 0.8f);
-            GUI.Label(r, finishMessage, messageStyle);
-            messageStyle.normal.textColor = old;
+            var style = new GUIStyle(UiTheme.Big) { wordWrap = true, normal = { textColor = new Color(1f, 0.92f, 0.8f) } };
+            UiTheme.Shadowed(new Rect(UiTheme.SW * 0.1f, UiTheme.SH * 0.16f, UiTheme.SW * 0.8f, 120f * u), finishMessage, style);
         }
     }
 }

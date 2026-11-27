@@ -35,8 +35,6 @@ public class PhotoMode : NetworkBehaviour
     string countdownText;
     bool showCaption;
     float flashAlpha;
-    string toast;
-    float toastUntil;
     float serverLastStart = -100f;
 
     static Texture2D white;
@@ -131,12 +129,12 @@ public class PhotoMode : NetworkBehaviour
             path = Path.Combine(dir2, "OurTrip_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".png");
             File.WriteAllBytes(path, tex.EncodeToPNG());
             SaveToGallery(path);
-            ShowToast("Saved to Photos");
+            ShowToast(Loc.T("Saved to Photos"));
         }
         catch (Exception e)
         {
             Debug.LogException(e);
-            ShowToast("Photo could not be saved");
+            ShowToast(Loc.T("Photo could not be saved"));
         }
         finally
         {
@@ -157,11 +155,7 @@ public class PhotoMode : NetworkBehaviour
 #endif
     }
 
-    void ShowToast(string text)
-    {
-        toast = text;
-        toastUntil = Time.time + 2.5f;
-    }
+    void ShowToast(string text) => UiTheme.Toast(text, 2.5f);
 
     // ---------- Drawing ----------
     void OnGUI()
@@ -183,9 +177,16 @@ public class PhotoMode : NetworkBehaviour
         captionStyle.fontSize = Mathf.RoundToInt(26 * u);
         toastStyle.fontSize = Mathf.RoundToInt(20 * u);
 
-        if (!busy && !HideUI)
+        if (!busy && !HideUI && UiTheme.MenuOpen)
         {
-            if (GUI.Button(new Rect(370f * u, 10f * u, 110f * u, 44f * u), "Photo")) RequestPhoto();
+            UiTheme.Begin();
+            if (UiTheme.RoundButton(UiTheme.MenuSlot(3), "camera"))
+            {
+                UiTheme.MenuOpen = false; // close the menu so it isn't in the way of posing
+                UiTheme.OpenPanel = null;
+                RequestPhoto();
+            }
+            GUI.matrix = Matrix4x4.identity;
         }
 
         if (countdownText != null)
@@ -195,7 +196,7 @@ public class PhotoMode : NetworkBehaviour
 
         if (showCaption)
         {
-            string text = caption + "  ·  " + DateTime.Now.ToString("d MMM yyyy", CultureInfo.InvariantCulture);
+            string text = caption + "  ·  " + DateTime.Now.ToString("d MMM yyyy", Loc.Culture);
             Shadowed(new Rect(0, 0, sw - 30f * u, sh - 20f * u), text, captionStyle);
         }
 
@@ -207,10 +208,6 @@ public class PhotoMode : NetworkBehaviour
             GUI.color = old;
         }
 
-        if (toast != null && Time.time < toastUntil && !showCaption)
-        {
-            GUI.Box(new Rect(sw * 0.5f - 160f * u, sh - 90f * u, 320f * u, 50f * u), toast, toastStyle);
-        }
     }
 
     static void Shadowed(Rect r, string text, GUIStyle style)

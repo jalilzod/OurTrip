@@ -1,4 +1,4 @@
- using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
@@ -218,37 +218,29 @@ public class PairEmote : NetworkBehaviour
     {
         if (PhotoMode.HideUI) return;
         if (!IsSpawned || !IsOwner) return;
+        UiTheme.Begin();
+        float u = UiTheme.U;
 
-        float s = Screen.height / 540f;
-        GUI.matrix = Matrix4x4.Scale(new Vector3(s, s, 1f));
-        float sw = Screen.width / s;
-
-        // Invite prompt in the middle of the screen
+        // Invite from your partner, in the middle of the screen
         if (pendingFrom != null)
         {
-            var r = new Rect(sw * 0.5f - 150f, 150f, 300f, 130f);
-            GUI.Box(r, "");
-            GUI.Label(new Rect(r.x + 20f, r.y + 15f, 260f, 30f), Labels[(int)pendingType] + "?  <3");
-            if (GUI.Button(new Rect(r.x + 20f, r.y + 60f, 120f, 50f), "Accept")) AnswerInvite(true);
-            if (GUI.Button(new Rect(r.x + 160f, r.y + 60f, 120f, 50f), "No")) AnswerInvite(false);
+            UiTheme.Dim();
+            var p = UiTheme.CenterRect(380f, 210f);
+            UiTheme.PanelBox(p);
+            var heart = UiTheme.Icon(pendingType == PairType.Hug ? "hug" : "heart");
+            if (heart != null) GUI.DrawTexture(new Rect(p.center.x - 22f * u, p.y + 18f * u, 44f * u, 44f * u), heart, ScaleMode.ScaleToFit);
+            GUI.Label(new Rect(p.x, p.y + 66f * u, p.width, 34f * u), Loc.T(pendingType == PairType.Hug ? "A hug for you?" : "A kiss on the cheek?"), UiTheme.Title);
+            float bw = (p.width - 60f * u) * 0.5f;
+            if (UiTheme.PillButton(new Rect(p.x + 20f * u, p.yMax - 74f * u, bw, 54f * u), Loc.T("Yes"), "heart", UiTheme.Kind.Active)) AnswerInvite(true);
+            if (UiTheme.PillButton(new Rect(p.x + 40f * u + bw, p.yMax - 74f * u, bw, 54f * u), Loc.T("Not now"))) AnswerInvite(false);
         }
 
-        // Hug / Kiss buttons above the solo emote buttons (bottom-right)
-        bool close = PartnerInRange(out _);
+        // Hug / Kiss buttons only appear when you're close to each other
+        if (!PartnerInRange(out _)) return;
         bool waiting = Time.time < waitingUntil;
-        float w = 90f, h = 50f, gapX = 8f;
-        float x = sw - (w + gapX) * 4 - 10f;
-        float y = 540f - h - 15f - h - 10f;
-
-        GUI.enabled = close && !busy && !waiting;
-        for (int i = 0; i < Labels.Length; i++)
-        {
-            string label = waiting ? "..." : Labels[i];
-            if (GUI.Button(new Rect(x + i * (w + gapX), y, w, h), label)) Ask((PairType)i);
-        }
-        GUI.enabled = true;
-
-        if (!close && Partner() != null)
-            GUI.Label(new Rect(x + 2f * (w + gapX), y + 15f, 200f, 30f), "Get closer...");
+        if (UiTheme.RoundButton(UiTheme.DockSlot(1, 1), "hug", true, !busy && !waiting)) Ask(PairType.Hug);
+        if (UiTheme.RoundButton(UiTheme.DockSlot(0, 1), "heart", true, !busy && !waiting)) Ask(PairType.Kiss);
+        if (waiting)
+            UiTheme.Shadowed(new Rect(UiTheme.DockSlot(1, 1).x - 40f * u, UiTheme.DockSlot(1, 1).y - 24f * u, 220f * u, 20f * u), Loc.T("Waiting for an answer..."), UiTheme.Small);
     }
 }
